@@ -1,33 +1,51 @@
 package org.example
 
+// import kotlinx.serialization.Required
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+
 import java.io.File
 import java.util.Base64
+
+@Serializable
+data class OllamaOptions(
+    val temperature: Double,
+    @kotlinx.serialization.SerialName("top_p") val topP: Double,
+    @kotlinx.serialization.SerialName("top_k") val topK: Int,
+    @kotlinx.serialization.SerialName("num_ctx") val numCtx: Int
+)
+
+@Serializable
+data class OllamaRequest(
+    val model: String,
+    val prompt: String,
+    val stream: Boolean = false,
+    val format: String? = null,
+    val options: OllamaOptions,
+    val images: List<String>
+)
 
 fun buildOllamaJson(config: OllamaConfig, rawPrompt: String, imageFile: File): String {
     val base64Image = Base64.getEncoder().encodeToString(imageFile.readBytes())
 
-    val escapedPrompt = rawPrompt.trimIndent()
-        .replace("\\", "\\\\")
-        .replace("\"", "\\\"")
-        .replace("\n", "\\n")
-        .replace("\r", "")
+    val requestObj = OllamaRequest(
+        model = config.modelName,
+        prompt = rawPrompt.trimIndent(),
+        stream = false,
+        format = "json",
+        options = OllamaOptions(
+            temperature = config.modelTemperature,
+            topP = config.modelTopP,
+            topK = config.modelTopK,
+            numCtx = config.numCtx
+        ),
+        images = listOf(base64Image)
+    )
 
-    return """
-        {
-            "model": "${config.MODEL_NAME}",
-            "prompt": "$escapedPrompt",
-            "stream": false,
-            "format": "json",
-            "options": {
-                "temperature": ${config.MODEL_TEMPERATURE},
-                "top_p": ${config.MODEL_TOP_P},
-                "top_k": ${config.MODEL_TOP_K},
-                "num_ctx": ${config.NUM_CTX}
-            },
-            "images": ["$base64Image"]
-        }
-    """.trimIndent()
+    return judgeJson.encodeToString(requestObj)
+
 }
+
 
 
 

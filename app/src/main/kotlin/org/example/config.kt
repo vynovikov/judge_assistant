@@ -8,23 +8,23 @@ private val dotenv = dotenv {
 }
 
 object AppConfig {
-    val DEFAULT_SAMPLE_FILE: String = dotenv.get("RECOGNIZE_FILE_PATH")
+    val recognizeFilePath: String = dotenv.get("RECOGNIZE_FILE_PATH")
 }
 
 object OllamaConfig {
-    const val GENERATE_ENDPOINT = "http://localhost:11434/api/generate"
-    const val REQUEST_TIMEOUT_MS = 300_000L
-    const val MODEL_NAME = "qwen2.5vl:3b"
+    val ollamaEndpoint: String = dotenv.get("OLLAMA_ENDPOINT")
+    val requestTimeout: Long = dotenv.get("REQUEST_TIMEOUT_MS").toLong()
+    val modelName: String =dotenv.get("MODEL_NAME")
 
-    const val MODEL_TEMPERATURE = 0.0
-    const val MODEL_TOP_P = 0.01
-    const val MODEL_TOP_K = 1
-    const val NUM_CTX = 32768
+    val modelTemperature: Double = dotenv.get("MODEL_TEMPERATURE").toDouble()
+    val modelTopP : Double = dotenv.get("MODEL_TOP_P").toDouble()
+    val modelTopK: Int = dotenv.get("MODEL_TOP_K").toInt()
+    val numCtx: Int = dotenv.get("NUM_CTX").toInt()
 
-    val PROMPT_FILE_PATH: String = dotenv.get("OLLAMA_PROMPT_PATH")
+    val recognizePromptPath: String = dotenv.get("RECOGNIZE_PROMPT_PATH")
 
-    val RECOGNIZE_PROMPT: String by lazy {
-        val promptFile = File(PROMPT_FILE_PATH)
+    val recognizePrompt: String by lazy {
+        val promptFile = File(recognizePromptPath)
         if (promptFile.exists()) {
             promptFile.readText(Charsets.UTF_8)
         } else {

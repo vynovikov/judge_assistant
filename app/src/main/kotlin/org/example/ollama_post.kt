@@ -12,7 +12,10 @@ import java.util.Base64
 import kotlinx.serialization.json.Json
 
 
-val judgeJson = Json { ignoreUnknownKeys = true }
+val judgeJson = Json {
+    ignoreUnknownKeys = true
+    encodeDefaults = true
+    }
 
 @Serializable
 data class OllamaEnvelope(val response: String)
@@ -32,15 +35,26 @@ suspend fun ollamaPost(
     val requestBody = buildOllamaJson(config, rawPrompt, file)
 
     println("Отправка запроса структуры результатов в Ollama...")
-    val httpResponse = client.post(config.GENERATE_ENDPOINT) {
+
+    val httpResponse = client.post(config.ollamaEndpoint) {
         contentType(ContentType.Application.Json)
         setBody(requestBody)
     }
 
     val responseText = httpResponse.bodyAsText()
     val envelope = judgeJson.decodeFromString<OllamaEnvelope>(responseText)
-    val resultJSON = judgeJson.decodeFromString<Map<String, AthleteProtocol>>(envelope.response)
+    val cleanJsonString = envelope.response
+        .trim()
+        .removePrefix("```json")
+        .removeSuffix("```")
+        .trim()
 
-    return resultJSON
+    return try {
+        judgeJson.decodeFromString<Map<String, AthleteProtocol>>(cleanJsonString)
+    } catch (e: Exception) {
+        println("\n🛑 Ошибка разбора JSON от модели!")
+        println("Текст ответа, который не удалось распарсить:\n$cleanJsonString")
+        println("Причина ошибки: ${e.message}\n")
+        throw e
+    }
 }
-
